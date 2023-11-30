@@ -12,6 +12,7 @@ public class DriverController extends CommandBase {
     DriveBase m_driveBase;
     GamepadEx driverGamepad;
 
+
     public DriverController(DriveBase m_driveBase, Gamepad gamepad){
         this.m_driveBase = m_driveBase;
         driverGamepad = new GamepadEx(gamepad);
@@ -26,10 +27,12 @@ public class DriverController extends CommandBase {
                 new ChassisSpeeds(
                         driverGamepad.getRightX(),
                         driverGamepad.getRightY(),
-                        driverGamepad.getLeftX()
+                        driverGamepad.getLeftY()
                 ),
                 true
         );
+
+
     }
 
 }
