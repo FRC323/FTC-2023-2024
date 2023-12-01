@@ -13,7 +13,7 @@ public class DriveBaseOnly extends CommandOpMode {
 
     @Override
     public void initialize() {
-        DriveBase m_driveBase = new DriveBase(hardwareMap);
+        DriveBase m_driveBase = new DriveBase(hardwareMap, telemetry);
 
         DriverController m_driverCommand = new DriverController(m_driveBase,gamepad1);
 

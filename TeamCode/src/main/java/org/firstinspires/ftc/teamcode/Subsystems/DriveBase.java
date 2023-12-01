@@ -10,6 +10,7 @@ import com.arcrobotics.ftclib.kinematics.wpilibkinematics.ChassisSpeeds;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class DriveBase extends SubsystemBase{
@@ -39,7 +40,7 @@ public class DriveBase extends SubsystemBase{
     public static final double CENTER_WHEEL_OFFSET = -2.1;
 
 
-//    private final IMU imu;
+    private IMU imu;
 
     //Drive, kinematics, and Odometry
     private final MecanumDrive m_drive;
@@ -48,26 +49,26 @@ public class DriveBase extends SubsystemBase{
 
     private ChassisSpeeds speeds = new ChassisSpeeds(0.0,0.0,0.0);
 
+    private Telemetry telemetry;
 
-
-    public DriveBase(HardwareMap hardware_map){
+    public DriveBase(HardwareMap hardware_map, Telemetry telemetry){
 
         frontLeftMotor = new Motor(hardware_map,"Front Left");
         frontRightMotor = new Motor(hardware_map,"Front Right");
         backLeftMotor = new Motor(hardware_map,"Back Left");
         backRightMotor = new Motor(hardware_map,"Back Right");
 
-
+        this.telemetry = telemetry;
 
 //        LeftEncoder = hardware_map.get(Motor.Encoder.class, "LeftEncoder").setDistancePerPulse(0);
 //        RightEncoder = hardware_map.get(Motor.Encoder.class, "RightEncoder").setDistancePerPulse(0);
 //        CenterEncoder = hardware_map.get(Motor.Encoder.class, "CenterEncoder").setDistancePerPulse(0);
 
-//        imu = hardware_map.get(IMU.class,"imu");
-
-
+        imu = hardware_map.get(IMU.class,"imu");
 
         m_drive = new MecanumDrive(frontLeftMotor,frontRightMotor,backLeftMotor,backRightMotor);
+        m_drive.setRightSideInverted(false);
+
 
 //        m_odometry = new HolonomicOdometry(
 //                LeftEncoder::getDistance,
@@ -82,23 +83,25 @@ public class DriveBase extends SubsystemBase{
     @Override
     public void periodic(){
 
-//        Rotation2d gyroAngle = Rotation2d.fromDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        Rotation2d gyroAngle = Rotation2d.fromDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + 90.0);
 
-//        if(fieldCentric){
-//            m_drive.driveFieldCentric(
-//                    speeds.vyMetersPerSecond,
-//                    speeds.vxMetersPerSecond,
-//                    speeds.omegaRadiansPerSecond,
-//                    gyroAngle.getDegrees()
-//            );
-//        }else{
+        if(fieldCentric){
+            m_drive.driveFieldCentric(
+                    speeds.vyMetersPerSecond,
+                    speeds.vxMetersPerSecond,
+                    speeds.omegaRadiansPerSecond,
+                    gyroAngle.getDegrees()
+            );
+        }else{
 
             m_drive.driveRobotCentric(
                     speeds.vxMetersPerSecond,
                     speeds.vyMetersPerSecond,
                     speeds.omegaRadiansPerSecond
             );
-//        }
+
+
+        }
 
 
 //        m_odometry.updatePose();
@@ -114,5 +117,7 @@ public class DriveBase extends SubsystemBase{
 //    public void setRobotPose(Pose2d robotPose){
 //        m_odometry.updatePose(robotPose);
 //    }
-
+    public void resetGyro(){
+        this.imu.resetYaw();
+    }
 }
