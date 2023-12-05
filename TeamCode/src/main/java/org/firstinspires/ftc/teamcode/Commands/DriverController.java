@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.Commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
-import com.arcrobotics.ftclib.gamepad.ButtonReader;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.kinematics.wpilibkinematics.ChassisSpeeds;
@@ -13,16 +12,16 @@ import org.firstinspires.ftc.teamcode.Subsystems.DriveBase;
 public class DriverController extends CommandBase {
 
     DriveBase m_driveBase;
-    GamepadEx driverGamepad;
+    GamepadEx gamepad;
 
     GamepadButton rightBumper;
     GamepadButton leftBumper;
 
     public DriverController(DriveBase m_driveBase, Gamepad gamepad){
         this.m_driveBase = m_driveBase;
-        driverGamepad = new GamepadEx(gamepad);
-        rightBumper = new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER);
-        leftBumper = new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER);
+        this.gamepad = new GamepadEx(gamepad);
+        rightBumper = new GamepadButton(this.gamepad, GamepadKeys.Button.RIGHT_BUMPER);
+        leftBumper = new GamepadButton(this.gamepad, GamepadKeys.Button.LEFT_BUMPER);
 
         addRequirements(m_driveBase);
     }
@@ -34,9 +33,9 @@ public class DriverController extends CommandBase {
 
         m_driveBase.setDriveSpeeds(
                 new ChassisSpeeds(
-                        driverGamepad.getRightY(),
-                        -driverGamepad.getRightX(),
-                        driverGamepad.getLeftX()
+                        gamepad.getRightY(),
+                        -gamepad.getRightX(),
+                        gamepad.getLeftX()
                 ),
                 !leftBumper.get()
         );
