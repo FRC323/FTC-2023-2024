@@ -3,77 +3,115 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
+import androidx.annotation.Nullable;
+
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 
 public class ScoringMechanism extends SubsystemBase {
-
+    //Outputs
     private Motor elevatorMotor;
     private Servo rightServo;
     private Servo leftServo;
     private Motor handoffMotor;
 
+    //Inputs
+//    private  armEncoder; //TODO: Find out how to read from external encoders
+    private DigitalChannel magSwitch;
+
+
     //CONSTANTS
+    final double ELEVATOR_MAX_DISTANCE = 850; //In encoder ticks
     final double ARM_LENGTH = 12.0; //inches
     final double ELEVATOR_ANGLE = 0.45; //radians
 
     final double ELEVATOR_DISTANCE_PER_PULSE = 1; //TODO
     final double STARTING_HEIGHT = 0.0; //inches
 
-    private double armAngle = 0.0;
 
-    public ScoringMechanism(HardwareMap hardwareMap){
-        elevatorMotor = hardwareMap.get(Motor.class,"scoring.motor.elevator");
-        rightServo = hardwareMap.get(Servo.class,"scoring.servo.right");
-        leftServo = hardwareMap.get(Servo.class,"scoring.servo.right");
-        handoffMotor = hardwareMap.get(Motor.class,"scoring.motor.handoff");
+    private double armAngle = 0.0;
+    private PIDFController elevatorController;
+    private Telemetry telemetry;
+
+
+    public ScoringMechanism(HardwareMap hardwareMap, Telemetry telemetry){
+        elevatorMotor = new Motor(hardwareMap,"Elevator Motor");
+        rightServo = hardwareMap.get(Servo.class,"Right Arm Servo");
+        leftServo = hardwareMap.get(Servo.class,"Left Arm Servo");
+//        handoffMotor = hardwareMap.get(DcMotor.class,"scoring.motor.handoff");
+
+
+        magSwitch = hardwareMap.get(DigitalChannel.class,"Mag Switch");
+        magSwitch.setMode(DigitalChannel.Mode.INPUT);
+
+        this.telemetry = telemetry;
 
         rightServo.setDirection(Servo.Direction.FORWARD);
         leftServo.setDirection(Servo.Direction.REVERSE);
 
-        elevatorMotor.setRunMode(Motor.RunMode.PositionControl);
-        elevatorMotor.setPositionTolerance(13.6);
+
+        elevatorMotor.setRunMode(Motor.RunMode.RawPower);
+        elevatorMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        elevatorController = new PIDFController(0.005,0.0,0.00,0.0);
+
     }
 
     @Override
     public void periodic(){
 
+        //Elevator Movement
+        double elevatorPower = elevatorController.calculate(elevatorMotor.getCurrentPosition());
+
+        //Checks if reaching lower bound of elevator
+        if(!magSwitch.getState() && elevatorPower < 0.0){
+            elevatorPower = -0.15;
+        }
+
+        //Checks if reaching upper bound of elevator
+        if(elevatorMotor.getCurrentPosition() > ELEVATOR_MAX_DISTANCE && elevatorPower > 0.0) {
+            elevatorPower = 0.0;
+        }
+
+        elevatorMotor.set(elevatorPower);
+
+
+        //Arm Movement
         double position = armAngle / (2 * Math.PI);
 
-        rightServo.setPosition(position);
         leftServo.setPosition(position);
+        rightServo.setPosition(position);
 
-        if(!elevatorMotor.atTargetPosition()) elevatorMotor.set(0.5);
-        else elevatorMotor.stopMotor();
 
+        telemetry.addLine(String.format("Pos:%d",elevatorMotor.getCurrentPosition()));
+        telemetry.addLine(String.format("Mag: %b", !magSwitch.getState()));
+        telemetry.update();
 
     }
 
     public void setTargetState(double elevatorLength, double armAngle){
         this.armAngle = armAngle;
-
-        elevatorMotor.setTargetPosition((int)(elevatorLength / ELEVATOR_DISTANCE_PER_PULSE));
+        elevatorController.setSetPoint(elevatorLength);
     }
-
-
-
 
 
 
     public void setTargetEndPoint(double distance, double height){
-        //TODO: Figure out math for converting desired height and distance to arm pose and elevator pose
         double[][] stateOptons =  getStateOptionsFromTargetPoint(distance,height);
+    }
 
-
-
+    public void resetElevatorEncoder(){
+        elevatorMotor.resetEncoder();
     }
 
     public double getElevatorLength(){
-        //TODO:Return actual elevator length
-        return 0.0;
+        return elevatorMotor.getCurrentPosition() * ELEVATOR_DISTANCE_PER_PULSE;
     }
     public  double getArmAngle(){
         //TODO:Return actual arm angle
@@ -94,7 +132,7 @@ public class ScoringMechanism extends SubsystemBase {
 
 
 
-
+    @Nullable
     public double[][] getStateOptionsFromTargetPoint(double distance,double height){
         /*  Potential Points for Joint from end Point are on:
             - (x-d)^2 + (y - h)^2 = ARM_LENGTH^2 (Circle Formula)
@@ -119,21 +157,18 @@ public class ScoringMechanism extends SubsystemBase {
         double c = -(Math.pow(ARM_LENGTH,2) - Math.pow(h,2) - Math.pow(d,2));
         double[] xCoordinates =  solveQuadratic(a,b,c);
 
-        return new double[][] {
+        double[][] possibleStates = {
                 getStateFromJointCordinate(xCoordinates[0],distance),
                 getStateFromJointCordinate(xCoordinates[1],distance)
         };
 
+        if(possibleStates[0] == null || possibleStates[1] == null) return null;
+        return possibleStates;
+
 
     }
 
-    private double[] solveQuadratic(double a, double b, double c){
-        double[] solutions = {0.0,0.0};
-        solutions[0] = (-b + Math.sqrt( Math.pow(b,2) - (3*a*c) )) / (2*a);
-        solutions[1] = (-b - Math.sqrt( Math.pow(b,2) - (3*a*c) )) / (2*a);
-        return solutions;
-    }
-
+    @Nullable
     private double[] getStateFromJointCordinate(double x, double targetX){
         //Get using pythagorean theorem
         double elevatorDistance = Math.sqrt(Math.pow(x,2) + Math.pow(x * Math.tan(ELEVATOR_ANGLE),2));
@@ -141,10 +176,21 @@ public class ScoringMechanism extends SubsystemBase {
         // sin(armAngle) = (y - targetY) / ARM_LENGTH
         double armAngle = Math.acos( (x - targetX) / ARM_LENGTH);
 
+        if(elevatorDistance == Double.NaN || armAngle == Double.NaN) return null;
+
         return new double[] {
-            elevatorDistance,
-            armAngle,
+                elevatorDistance,
+                armAngle,
         };
+    }
+
+    @Nullable
+    private  double[] solveQuadratic(double a, double b, double c){
+        double[] solutions = {0.0,0.0};
+        solutions[0] = (-b + Math.sqrt( Math.pow(b,2) - (3*a*c) )) / (2*a);
+        solutions[1] = (-b - Math.sqrt( Math.pow(b,2) - (3*a*c) )) / (2*a);
+        if(solutions[0] == Double.NaN || solutions[1] == Double.NaN) return null;
+        return solutions;
     }
 
 

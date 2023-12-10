@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 
 
 @TeleOp(name="MotorTest ")
+@Disabled
 public class ServoResetTest extends LinearOpMode {
 //
 //    private DcMotor motor = null;
