@@ -83,12 +83,12 @@ public class DriveBase extends SubsystemBase{
     @Override
     public void periodic(){
 
-        Rotation2d gyroAngle = Rotation2d.fromDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + 90.0);
+        Rotation2d gyroAngle = Rotation2d.fromDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 
         if(fieldCentric){
             m_drive.driveFieldCentric(
-                    speeds.vyMetersPerSecond,
                     speeds.vxMetersPerSecond,
+                    speeds.vyMetersPerSecond,
                     speeds.omegaRadiansPerSecond,
                     gyroAngle.getDegrees()
             );
