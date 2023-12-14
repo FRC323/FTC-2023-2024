@@ -32,16 +32,15 @@ public class ScoringMechanism extends SubsystemBase {
 
 
     //CONSTANTS
-    private final double ARM_LENGTH = 12.0; //inches TODO
-    private final double ARM_MIN_ANGLE = 0.0; //Radians TODO
-    private final double ARM_MAX_ANGLE = 0.0; //Radians TODO
-    private final double ARM_ANGLE_TO_POSE = 1.0;//TODO
+    private final double ARM_LENGTH = 13.75; //inches
+    private final double ARM_MIN_ANGLE = 0.0; //Radians
+    private final double ARM_MAX_ANGLE = 1.0; //Radians TODO
+    private final double ARM_ANGLE_TO_POSE = 1.0/ARM_MAX_ANGLE;//TODO
 
     //Elevator Constants
-    final double ELEVATOR_MAX_DISTANCE = 850; //In encoder ticks //TODO: Make slightly more accurate
-    final double ELEVATOR_ANGLE = 0.45; //radians //TODO
-    final double ELEVATOR_DISTANCE_PER_PULSE = 1; //TODO
-    final double STARTING_HEIGHT = 0.0; //inches // TODO
+    final double ELEVATOR_MAX_DISTANCE = 13.0; //Inches
+    final double ELEVATOR_SLOPE = Math.sqrt(3); //30 - 60 -90 triangle;
+    final double ELEVATOR_DISTANCE_PER_PULSE = 5.5/325.0;
 
     //Variables
     private double armAngle = 0.0;
@@ -88,7 +87,7 @@ public class ScoringMechanism extends SubsystemBase {
         }
 
         //Checks if reaching upper bound of elevator
-        if(elevatorMotor.getCurrentPosition() > ELEVATOR_MAX_DISTANCE && elevatorPower > 0.0) {
+        if((elevatorMotor.getCurrentPosition() * ELEVATOR_DISTANCE_PER_PULSE)  > ELEVATOR_MAX_DISTANCE && elevatorPower > 0.0) {
             elevatorPower = 0.0;
         }
 
@@ -106,6 +105,9 @@ public class ScoringMechanism extends SubsystemBase {
         //Handoff
         handoffMotor.setPower(handoffPower);
         handoffMotor.setDirection(handoffDirection);
+
+        telemetry.addLine(String.format("Ticks:%d",elevatorMotor.getCurrentPosition()));
+        telemetry.update();
 
     }
 
@@ -145,17 +147,17 @@ public class ScoringMechanism extends SubsystemBase {
         return 0.0;
     }
 
-    public double getCurrentHeight(){
-        double armHeight = sin(getArmAngle()) * ARM_LENGTH;
-        double elevatorHeight = sin(ELEVATOR_ANGLE) * getElevatorLength();
-        return elevatorHeight + armHeight + STARTING_HEIGHT;
-    }
-
-    public double getCurrentDistance(){
-        double armDistance = cos(getArmAngle()) * ARM_LENGTH;
-        double elevatorDistance = cos(ELEVATOR_ANGLE) * getElevatorLength();
-        return elevatorDistance + armDistance;
-    }
+//    public double getCurrentHeight(){
+//        double armHeight = sin(getArmAngle()) * ARM_LENGTH;
+//        double elevatorHeight = sin(ELEVATOR_ANGLE) * getElevatorLength();
+//        return elevatorHeight + armHeight + STARTING_HEIGHT;
+//    }
+//
+//    public double getCurrentDistance(){
+//        double armDistance = cos(getArmAngle()) * ARM_LENGTH;
+//        double elevatorDistance = cos(ELEVATOR_ANGLE) * getElevatorLength();
+//        return elevatorDistance + armDistance;
+//    }
 
     private OptionalDouble getServoPoseFromAngle(double angle){
         if(angle > ARM_MAX_ANGLE  || angle < ARM_MIN_ANGLE){
@@ -184,12 +186,9 @@ public class ScoringMechanism extends SubsystemBase {
             - Get Y Coordinates using y = mx
          */
 
-        double h = height - STARTING_HEIGHT;
-
-        final double m = Math.tan(ELEVATOR_ANGLE);
-        double a = 1 + Math.pow(m,2);
-        double b = -2 * (distance + (m*h));
-        double c = -(Math.pow(ARM_LENGTH,2) - Math.pow(h,2) - Math.pow(distance,2));
+        double a = 1 + Math.pow(ELEVATOR_SLOPE,2);
+        double b = -2 * (distance + (ELEVATOR_SLOPE*height));
+        double c = -(Math.pow(ARM_LENGTH,2) - Math.pow(height,2) - Math.pow(distance,2));
         double[] xCoordinates =  solveQuadratic(a,b,c);
 
 
@@ -205,7 +204,7 @@ public class ScoringMechanism extends SubsystemBase {
     }
     private Optional<double[]> getStateFromJointCordinate(double x, double distance){
         //Get using pythagorean theorem
-        double elevatorDistance = Math.sqrt(Math.pow(x,2) + Math.pow(x * Math.tan(ELEVATOR_ANGLE),2));
+        double elevatorDistance = Math.sqrt(Math.pow(x,2) + Math.pow(x * ELEVATOR_SLOPE,2));
 
         // cos(armAngle) = (x - targetX) / ARM_LENGTH
         double armAngle = Math.acos( (x - distance) / ARM_LENGTH); //TODO: Understand this better
