@@ -21,38 +21,39 @@ public class DriveBase extends SubsystemBase{
     private final Motor backRightMotor;
     private final Motor backLeftMotor;
 
-//    private final Motor.Encoder LeftEncoder;
-//    private final Motor.Encoder CenterEncoder;
-//    private final Motor.Encoder RightEncoder;
+    private final Motor.Encoder leftEncoder;
+    private final Motor.Encoder centerEncoder;
+    private final Motor.Encoder rightEncoder;
 
-    //TODO: Get actual track width and wheel offset
 
     // The lateral distance between the left and right odometers
     // is called the track width. This is very important for
     // determining angle for turning approximations
-    public static final double TRACKWIDTH = 14.7;
+    public static final double TRACKWIDTH = 15.533;//in //14.7;
 
     // Center wheel offset is the distance between the
     // center of rotation of the robot and the center odometer.
     // This is to correct for the error that might occur when turning.
     // A negative offset means the odometer is closer to the back,
     // while a positive offset means it is closer to the front.
-    public static final double CENTER_WHEEL_OFFSET = -2.1;
+    public static final double CENTER_WHEEL_OFFSET = 8.412;//in //-2.1;
 
+    private final double ODOMETRY_DISTANCE_PER_TICK = 0.0;
 
-    private IMU imu;
+    private final IMU imu;
 
     //Drive, kinematics, and Odometry
     private final MecanumDrive m_drive;
-//    private final HolonomicOdometry m_odometry;
+    private final HolonomicOdometry m_odometry;
     private boolean fieldCentric;
 
     private ChassisSpeeds speeds = new ChassisSpeeds(0.0,0.0,0.0);
 
-    private Telemetry telemetry;
+    private final Telemetry telemetry;
 
     public DriveBase(HardwareMap hardware_map, Telemetry telemetry){
 
+        //Motors
         frontLeftMotor = new Motor(hardware_map,"Front Left");
         frontRightMotor = new Motor(hardware_map,"Front Right");
         backLeftMotor = new Motor(hardware_map,"Back Left");
@@ -60,23 +61,30 @@ public class DriveBase extends SubsystemBase{
 
         this.telemetry = telemetry;
 
-//        LeftEncoder = hardware_map.get(Motor.Encoder.class, "LeftEncoder").setDistancePerPulse(0);
-//        RightEncoder = hardware_map.get(Motor.Encoder.class, "RightEncoder").setDistancePerPulse(0);
-//        CenterEncoder = hardware_map.get(Motor.Encoder.class, "CenterEncoder").setDistancePerPulse(0);
+        //Encoders
+        leftEncoder = new Motor(hardware_map, "Left Odom").encoder;
+        rightEncoder = new Motor(hardware_map, "Right Odom").encoder;
+        centerEncoder = new Motor(hardware_map, "Center Odom").encoder;
 
+        leftEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
+        rightEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
+        centerEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
+
+        //Gyro
         imu = hardware_map.get(IMU.class,"imu");
 
+        //Kinematics
         m_drive = new MecanumDrive(frontLeftMotor,frontRightMotor,backLeftMotor,backRightMotor);
         m_drive.setRightSideInverted(false);
 
-
-//        m_odometry = new HolonomicOdometry(
-//                LeftEncoder::getDistance,
-//                RightEncoder::getDistance,
-//                CenterEncoder::getDistance,
-//                TRACKWIDTH,
-//                CENTER_WHEEL_OFFSET
-//        );
+        //Odometry
+        m_odometry = new HolonomicOdometry(
+                leftEncoder::getDistance,
+                rightEncoder::getDistance,
+                centerEncoder::getDistance,
+                TRACKWIDTH,
+                CENTER_WHEEL_OFFSET
+        );
 
     }
 
@@ -104,19 +112,23 @@ public class DriveBase extends SubsystemBase{
         }
 
 
-//        m_odometry.updatePose();
+        m_odometry.updatePose();
+
+        telemetry.addLine(String.format("X: %4.2f, Y:%4.2f",m_odometry.getPose().getX(),m_odometry.getPose().getY()));
+        telemetry.addLine(String.format("L:%d,R:%d,C%d",leftEncoder.getPosition(),rightEncoder.getPosition(),centerEncoder.getPosition()));
+        telemetry.update();
     }
 
     public void setDriveSpeeds(ChassisSpeeds speeds, boolean fieldCentric){
         this.speeds = speeds;
         this.fieldCentric = fieldCentric;
     }
-//    public Pose2d getRobotPose2d(){
-//        return m_odometry.getPose();
-//    }
-//    public void setRobotPose(Pose2d robotPose){
-//        m_odometry.updatePose(robotPose);
-//    }
+    public Pose2d getRobotPose2d(){
+        return m_odometry.getPose();
+    }
+    public void setRobotPose(Pose2d robotPose){
+        m_odometry.updatePose(robotPose);
+    }
     public void resetGyro(){
         this.imu.resetYaw();
     }
