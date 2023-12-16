@@ -115,9 +115,8 @@ public class DriveBase extends SubsystemBase{
 
 
         m_odometry.updatePose();
-        telemetry.addLine(String.format("X: %4.2f, Y:%4.2f",m_odometry.getPose().getX(),m_odometry.getPose().getY()));
-        telemetry.addLine(String.format("L:%4.2f,R:%4.2f,C%4.2f",leftEncoder.getDistance(),rightEncoder.getDistance(),centerEncoder.getDistance()));
-        telemetry.update();
+//        telemetry.addLine(String.format("X: %4.2f, Y:%4.2f",m_odometry.getPose().getX(),m_odometry.getPose().getY()));
+//        telemetry.addLine(String.format("L:%4.2f,R:%4.2f,C%4.2f",leftEncoder.getDistance(),rightEncoder.getDistance(),centerEncoder.getDistance()));
     }
 
     public void setDriveSpeeds(ChassisSpeeds speeds, boolean fieldCentric){

@@ -106,8 +106,7 @@ public class ScoringMechanism extends SubsystemBase {
         handoffMotor.setPower(handoffPower);
         handoffMotor.setDirection(handoffDirection);
 
-        telemetry.addLine(String.format("Ticks:%d",elevatorMotor.getCurrentPosition()));
-        telemetry.update();
+//        telemetry.addLine(String.format("Ticks:%d",elevatorMotor.getCurrentPosition()));
 
     }
 

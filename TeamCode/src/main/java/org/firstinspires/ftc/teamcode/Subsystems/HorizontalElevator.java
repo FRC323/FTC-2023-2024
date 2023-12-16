@@ -9,10 +9,10 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class HorizontalElevator extends SubsystemBase {
 
-    private CRServo frontIntake;
-    private CRServo backIntake;
+    private final CRServo frontIntake;
+    private final CRServo backIntake;
 
-    private Telemetry telemetry;
+    private final Telemetry telemetry;
     private DcMotorSimple.Direction intakeDirection;
     private double intakePower = 0.0;
     public HorizontalElevator(HardwareMap hardwareMap,Telemetry telemetry){
@@ -30,9 +30,8 @@ public class HorizontalElevator extends SubsystemBase {
         backIntake.setDirection(intakeDirection);
         backIntake.setPower(intakePower);
 
-        telemetry.addLine(String.format("Pwr:%4.2f",intakePower));
-        telemetry.addLine(String.format("Dir:%d",intakeDirection == DcMotorSimple.Direction.FORWARD ? 1 : 0));
-        telemetry.update();
+//        telemetry.addLine(String.format("Pwr:%4.2f",intakePower));
+//        telemetry.addLine(String.format("Dir:%d",intakeDirection == DcMotorSimple.Direction.FORWARD ? 1 : 0));
 
     }
 
