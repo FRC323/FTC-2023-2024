@@ -38,7 +38,7 @@ public class DriveBase extends SubsystemBase{
     // while a positive offset means it is closer to the front.
     public static final double CENTER_WHEEL_OFFSET = 8.412;//in //-2.1;
 
-    private final double ODOMETRY_DISTANCE_PER_TICK = 0.0;
+    private final double ODOMETRY_DISTANCE_PER_TICK = 23.625/28167; //1 turn = 8180
 
     private final IMU imu;
 
@@ -67,7 +67,9 @@ public class DriveBase extends SubsystemBase{
         centerEncoder = new Motor(hardware_map, "Center Odom").encoder;
 
         leftEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
+        leftEncoder.setDirection(Motor.Direction.REVERSE);
         rightEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
+        rightEncoder.setDirection(Motor.Direction.FORWARD);
         centerEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
 
         //Gyro
@@ -113,9 +115,8 @@ public class DriveBase extends SubsystemBase{
 
 
         m_odometry.updatePose();
-
         telemetry.addLine(String.format("X: %4.2f, Y:%4.2f",m_odometry.getPose().getX(),m_odometry.getPose().getY()));
-        telemetry.addLine(String.format("L:%d,R:%d,C%d",leftEncoder.getPosition(),rightEncoder.getPosition(),centerEncoder.getPosition()));
+        telemetry.addLine(String.format("L:%4.2f,R:%4.2f,C%4.2f",leftEncoder.getDistance(),rightEncoder.getDistance(),centerEncoder.getDistance()));
         telemetry.update();
     }
 
@@ -131,5 +132,10 @@ public class DriveBase extends SubsystemBase{
     }
     public void resetGyro(){
         this.imu.resetYaw();
+    }
+    public void resetOdometry(){
+        leftEncoder.reset();
+        rightEncoder.reset();
+        centerEncoder.reset();
     }
 }
