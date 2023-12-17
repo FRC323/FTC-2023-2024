@@ -45,6 +45,7 @@ public class DriveBase extends SubsystemBase{
     //Drive, kinematics, and Odometry
     private final MecanumDrive m_drive;
     private final HolonomicOdometry m_odometry;
+    private Rotation2d gyroOdometryResetAngle = new Rotation2d(0.0 );
     private boolean fieldCentric;
 
     private ChassisSpeeds speeds = new ChassisSpeeds(0.0,0.0,0.0);
@@ -59,6 +60,8 @@ public class DriveBase extends SubsystemBase{
         backLeftMotor = new Motor(hardware_map,"Back Left");
         backRightMotor = new Motor(hardware_map,"Back Right");
 
+
+
         this.telemetry = telemetry;
 
         //Encoders
@@ -71,6 +74,7 @@ public class DriveBase extends SubsystemBase{
         rightEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
         rightEncoder.setDirection(Motor.Direction.FORWARD);
         centerEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
+        centerEncoder.setDirection(Motor.Direction.REVERSE);
 
         //Gyro
         imu = hardware_map.get(IMU.class,"imu");
@@ -93,14 +97,12 @@ public class DriveBase extends SubsystemBase{
     @Override
     public void periodic(){
 
-        Rotation2d gyroAngle = Rotation2d.fromDegrees(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-
         if(fieldCentric){
             m_drive.driveFieldCentric(
                     speeds.vxMetersPerSecond,
                     speeds.vyMetersPerSecond,
                     speeds.omegaRadiansPerSecond,
-                    gyroAngle.getDegrees()
+                    getRotation().getDegrees()
             );
         }else{
 
@@ -124,7 +126,13 @@ public class DriveBase extends SubsystemBase{
         this.fieldCentric = fieldCentric;
     }
     public Pose2d getRobotPose2d(){
-        return m_odometry.getPose();
+        return new Pose2d(
+                m_odometry.getPose().getX(),
+                m_odometry.getPose().getY(),
+                getRotation().minus(gyroOdometryResetAngle));
+    }
+    public Rotation2d getRotation(){
+        return new Rotation2d(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
     }
     public void setRobotPose(Pose2d robotPose){
         m_odometry.updatePose(robotPose);
@@ -133,6 +141,8 @@ public class DriveBase extends SubsystemBase{
         this.imu.resetYaw();
     }
     public void resetOdometry(){
+        gyroOdometryResetAngle = getRotation();
+        m_odometry.updatePose(new Pose2d(0.0,0.0,new Rotation2d(0.0)));
         leftEncoder.reset();
         rightEncoder.reset();
         centerEncoder.reset();
