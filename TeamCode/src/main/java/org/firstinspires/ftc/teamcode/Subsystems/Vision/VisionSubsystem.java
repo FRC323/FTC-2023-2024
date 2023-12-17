@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
+import android.util.Pair;
+
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
@@ -19,6 +21,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -45,17 +49,42 @@ public class VisionSubsystem extends SubsystemBase {
                 .addProcessor(aprilTagProcessor)
                 .build();
 
+        visionPortal.resumeStreaming();
+
         this.telemetry = telemetry;
 
     }
 
     @Override
     public void periodic(){
-        visionPortal.resumeStreaming();
+//        visionPortal.resumeStreaming();
 
     }
 
-    public Optional<Pose2d> getRobotPose(){
+    public List<Pair<Integer,Pose2d>> getAprilTagsRelativePoses(){
+        List<Pair<Integer, Pose2d>> positions = new ArrayList<>();
+
+        for(AprilTagDetection detection : aprilTagProcessor.getDetections()){
+            double theta = (detection.ftcPose.bearing - detection.ftcPose.yaw);
+            positions.add(
+                    new Pair<>(
+                            0,
+                    new Pose2d(
+                    new Translation2d(
+                            detection.ftcPose.range * sin(theta),
+                            detection.ftcPose.range * cos(theta)
+                    ),
+                    new Rotation2d(
+                            detection.ftcPose.yaw
+                    )
+            )));
+        }
+
+        return positions;
+
+    }
+
+    public Optional<Pose2d> getRobotFieldPose(){
 
         AprilTagDetection detection = null;
 
