@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Commands;
+package org.firstinspires.ftc.teamcode.Commands.Controllers;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Subsystems.DriveBase;
 import org.firstinspires.ftc.teamcode.Subsystems.HorizontalElevator;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionSubsystem;
 
 public class DriverController extends CommandBase {
 
@@ -21,6 +22,8 @@ public class DriverController extends CommandBase {
     GamepadButton rightBumper;
     GamepadButton leftBumper;
 
+    Telemetry telemetry;
+
     public DriverController(DriveBase m_driveBase, HorizontalElevator horizontalElevator, Gamepad gamepad){
         this.m_driveBase = m_driveBase;
         this.m_horizontalElevator = horizontalElevator;
@@ -29,23 +32,26 @@ public class DriverController extends CommandBase {
         rightBumper = new GamepadButton(this.gamepad, GamepadKeys.Button.RIGHT_BUMPER);
         leftBumper = new GamepadButton(this.gamepad, GamepadKeys.Button.LEFT_BUMPER);
 
+        this.telemetry = telemetry;
 
         addRequirements(m_horizontalElevator);
         addRequirements(m_driveBase);
     }
 
     @Override
-    public void execute(){
+    public void execute() {
 
-        if(rightBumper.get()) m_driveBase.resetGyro();
+        if (rightBumper.get()) m_driveBase.resetGyro();
 
-        if(gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1){
-            m_horizontalElevator.setIntake(DcMotorSimple.Direction.REVERSE,0.75);
-        }else if(gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1){
-            m_horizontalElevator.setIntake(DcMotorSimple.Direction.FORWARD,0.75);
-        }else {
-            m_horizontalElevator.setIntake(DcMotorSimple.Direction.REVERSE,0.0);
+        if (gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) {
+            m_horizontalElevator.setIntake(DcMotorSimple.Direction.REVERSE, 0.75);
+        } else if (gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1) {
+            m_horizontalElevator.setIntake(DcMotorSimple.Direction.FORWARD, 0.75);
+        } else {
+            m_horizontalElevator.setIntake(DcMotorSimple.Direction.REVERSE, 0.0);
         }
+
+        if (gamepad.getButton(GamepadKeys.Button.A)) m_driveBase.resetOdometry();
 
         m_driveBase.setDriveSpeeds(
                 new ChassisSpeeds(
@@ -55,7 +61,6 @@ public class DriverController extends CommandBase {
                 ),
                 !leftBumper.get()
         );
-
 
     }
 

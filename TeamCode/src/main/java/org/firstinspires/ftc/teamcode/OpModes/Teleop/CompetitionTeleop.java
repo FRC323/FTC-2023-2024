@@ -2,11 +2,10 @@ package org.firstinspires.ftc.teamcode.OpModes.Teleop;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Gamepad;
 
-import org.firstinspires.ftc.teamcode.Commands.DriverController;
+import org.firstinspires.ftc.teamcode.Commands.Controllers.DriverController;
 import org.firstinspires.ftc.teamcode.Commands.InformationProcessing;
-import org.firstinspires.ftc.teamcode.Commands.OperatorController;
+import org.firstinspires.ftc.teamcode.Commands.Controllers.OperatorController;
 import org.firstinspires.ftc.teamcode.Subsystems.DriveBase;
 import org.firstinspires.ftc.teamcode.Subsystems.HorizontalElevator;
 import org.firstinspires.ftc.teamcode.Subsystems.ScoringMechanism;

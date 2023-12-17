@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Commands;
+package org.firstinspires.ftc.teamcode.Commands.Controllers;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -11,7 +11,7 @@ public class OperatorController extends CommandBase {
 
     ScoringMechanism scoringMechanism;
 
-    private GamepadEx gamepad;
+    private final GamepadEx gamepad;
 
 
     private double elevatorPosition = 0.0;
