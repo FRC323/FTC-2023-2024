@@ -55,19 +55,19 @@ public class DriveBase extends SubsystemBase{
     public DriveBase(HardwareMap hardware_map, Telemetry telemetry){
 
         //Motors
-        frontLeftMotor = new Motor(hardware_map,"Front Left");
-        frontRightMotor = new Motor(hardware_map,"Front Right");
+        frontLeftMotor = new Motor(hardware_map,"Front Left/Left Odom");
+        frontRightMotor = new Motor(hardware_map,"Front Right/Center Odom");
         backLeftMotor = new Motor(hardware_map,"Back Left");
-        backRightMotor = new Motor(hardware_map,"Back Right");
+        backRightMotor = new Motor(hardware_map,"Back Right/Arm Encoder");
 
 
 
         this.telemetry = telemetry;
 
         //Encoders
-        leftEncoder = new Motor(hardware_map, "Left Odom").encoder;
-        rightEncoder = new Motor(hardware_map, "Right Odom").encoder;
-        centerEncoder = new Motor(hardware_map, "Center Odom").encoder;
+        leftEncoder = frontLeftMotor.encoder;
+        rightEncoder = new Motor(hardware_map, "Front Extender/Right Odom").encoder;
+        centerEncoder = frontRightMotor.encoder;
 
         leftEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
         leftEncoder.setDirection(Motor.Direction.REVERSE);
@@ -97,10 +97,16 @@ public class DriveBase extends SubsystemBase{
     @Override
     public void periodic(){
 
+        frontLeftMotor.setInverted(true);
+        frontRightMotor.setInverted(false);
+        backLeftMotor.setInverted(false);
+        backRightMotor.setInverted(true);
+
+
         if(fieldCentric){
             m_drive.driveFieldCentric(
                     speeds.vxMetersPerSecond,
-                    speeds.vyMetersPerSecond,
+                    -speeds.vyMetersPerSecond,
                     speeds.omegaRadiansPerSecond,
                     getRotation().getDegrees()
             );
@@ -108,7 +114,7 @@ public class DriveBase extends SubsystemBase{
 
             m_drive.driveRobotCentric(
                     speeds.vxMetersPerSecond,
-                    speeds.vyMetersPerSecond,
+                    -speeds.vyMetersPerSecond,
                     speeds.omegaRadiansPerSecond
             );
 
