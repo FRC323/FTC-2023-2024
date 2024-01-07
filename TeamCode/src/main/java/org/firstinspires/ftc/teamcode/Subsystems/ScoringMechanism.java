@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
+import static java.lang.Math.PI;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.controller.PIDFController;
@@ -29,16 +28,16 @@ public class ScoringMechanism extends SubsystemBase {
     //Inputs
 //    private  armEncoder; //TODO: Find out how to read from external encoders
     private final DigitalChannel magSwitch;
-
+    private final Motor.Encoder armEncoder;
 
     //CONSTANTS
     private final double ARM_LENGTH = 13.75; //inches
     private final double ARM_MIN_ANGLE = 0.0; //Radians
-    private final double ARM_MAX_ANGLE = 1.0; //Radians TODO
+    private final double ARM_MAX_ANGLE = PI; //Radians TODO
     private final double ARM_ANGLE_TO_POSE = 1.0/ARM_MAX_ANGLE;//TODO
 
     //Elevator Constants
-    final double ELEVATOR_MAX_DISTANCE = 13.0; //Inches
+    final double ELEVATOR_MAX_DISTANCE = 13.5; //Inches
     final double ELEVATOR_SLOPE = Math.sqrt(3); //30 - 60 -90 triangle;
     final double ELEVATOR_DISTANCE_PER_PULSE = 5.5/325.0;
 
@@ -53,24 +52,30 @@ public class ScoringMechanism extends SubsystemBase {
 
 
     public ScoringMechanism(HardwareMap hardwareMap, Telemetry telemetry){
-        elevatorMotor = new Motor(hardwareMap,"Elevator Motor");
-        rightServo = hardwareMap.get(Servo.class,"Right Arm Servo");
-        leftServo = hardwareMap.get(Servo.class,"Left Arm Servo");
+        elevatorMotor = new Motor(hardwareMap,"Elevator");
+        rightServo = hardwareMap.get(Servo.class,"Arm 1");
+        leftServo = hardwareMap.get(Servo.class,"Arm 2");
         handoffMotor = hardwareMap.get(CRServo.class,"Handoff");
 
-
-        magSwitch = hardwareMap.get(DigitalChannel.class,"Mag Switch");
+        magSwitch = hardwareMap.get(DigitalChannel.class,"Elevator Zero");
         magSwitch.setMode(DigitalChannel.Mode.INPUT);
+
+        armEncoder = new Motor(hardwareMap,"Back Right/Arm Encoder").encoder;
 
         this.telemetry = telemetry;
 
+        //Arm Config
         rightServo.setDirection(Servo.Direction.FORWARD);
         leftServo.setDirection(Servo.Direction.REVERSE);
 
 
+        //Elevator Config
         elevatorMotor.setRunMode(Motor.RunMode.RawPower);
-        elevatorMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        elevatorController = new PIDFController(0.005,0.0,0.00,0.0);
+        elevatorMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
+        elevatorMotor.setInverted(true);
+
+        elevatorController = new PIDFController(0.02,0.0,0.00,0.0);
+        elevatorController.setTolerance(15);
 
 
     }
@@ -83,13 +88,15 @@ public class ScoringMechanism extends SubsystemBase {
 
         //Checks if reaching lower bound of elevator
         if(!magSwitch.getState() && elevatorPower < 0.0){
-            elevatorPower = -0.15;
+            elevatorPower = -0.2;
         }
 
         //Checks if reaching upper bound of elevator
         if((elevatorMotor.getCurrentPosition() * ELEVATOR_DISTANCE_PER_PULSE)  > ELEVATOR_MAX_DISTANCE && elevatorPower > 0.0) {
             elevatorPower = 0.0;
         }
+
+        if(elevatorController.atSetPoint()) elevatorPower = 0.0;
 
         elevatorMotor.set(elevatorPower);
 
@@ -106,7 +113,7 @@ public class ScoringMechanism extends SubsystemBase {
         handoffMotor.setPower(handoffPower);
         handoffMotor.setDirection(handoffDirection);
 
-//        telemetry.addLine(String.format("Ticks:%d",elevatorMotor.getCurrentPosition()));
+        telemetry.addLine(String.format("Ticks:%d",elevatorMotor.encoder.getPosition()));
 
     }
 
