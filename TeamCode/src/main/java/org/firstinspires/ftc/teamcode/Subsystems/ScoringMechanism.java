@@ -5,6 +5,7 @@ import static java.lang.Math.PI;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -23,42 +24,61 @@ public class ScoringMechanism extends SubsystemBase {
     private final Motor elevatorMotor;
     private final Servo rightServo;
     private final Servo leftServo;
-    private final CRServo handoffMotor;
+    private final CRServo handoff;
 
     //Inputs
-//    private  armEncoder; //TODO: Find out how to read from external encoders
     private final DigitalChannel magSwitch;
+    private final ColorSensor colorSensor;
     private final Motor.Encoder armEncoder;
 
     //CONSTANTS
-    private final double ARM_LENGTH = 13.75; //inches
-    private final double ARM_MIN_ANGLE = 0.0; //Radians
-    private final double ARM_MAX_ANGLE = PI; //Radians TODO
-    private final double ARM_ANGLE_TO_POSE = 1.0/ARM_MAX_ANGLE;//TODO
+    private static class ArmConstants {
+        public static final double ARM_LENGTH = 13.75; //inches
+        public static final double ARM_MIN_ANGLE = 0.0; //Radians
+        public static final double ARM_MAX_ANGLE = PI; //Radians TODO
+        public static final double ARM_ANGLE_TO_POSE = 1.0 / ARM_MAX_ANGLE;//TODO
+    }
+    private static class ElevatorConstants {
+        public static final double ELEVATOR_MAX_DISTANCE = 13.5; //Inches
+        public static final double ELEVATOR_SLOPE = 1.7320508;//Math.sqrt(3); //30 - 60 -90 triangle;
+        public static final double ELEVATOR_DISTANCE_PER_PULSE = 5.5 / 325.0;
+    }
+    private static class PositionLookup{
+        //The points between wich the arm can't move when the elevator is not extended
+        public static final double frontDeadZone = 0.05;
+        public static final double backDeadZone = 0.35;
 
-    //Elevator Constants
-    final double ELEVATOR_MAX_DISTANCE = 13.5; //Inches
-    final double ELEVATOR_SLOPE = Math.sqrt(3); //30 - 60 -90 triangle;
-    final double ELEVATOR_DISTANCE_PER_PULSE = 5.5/325.0;
+        public static final double[] travelFront = {ElevatorConstants.ELEVATOR_MAX_DISTANCE/ElevatorConstants.ELEVATOR_DISTANCE_PER_PULSE,0.05};
+        public static final double[] travelBack = {ElevatorConstants.ELEVATOR_MAX_DISTANCE/ElevatorConstants.ELEVATOR_DISTANCE_PER_PULSE,0.4};
+        public static final double[][] pixelLevel = {
+                {0.0,0.05}, //Home Position
+        };
+    }
+
 
     //Variables
     private double armAngle = 0.0;
+    private double elevatorLength = 0.0;
     private final PIDFController elevatorController;
     private double handoffPower = 0.0;
-    private DcMotorSimple.Direction handoffDirection = DcMotorSimple.Direction.REVERSE;
 
 
     private final Telemetry telemetry;
 
 
     public ScoringMechanism(HardwareMap hardwareMap, Telemetry telemetry){
+        //Output Initialization
         elevatorMotor = new Motor(hardwareMap,"Elevator");
         rightServo = hardwareMap.get(Servo.class,"Arm 1");
         leftServo = hardwareMap.get(Servo.class,"Arm 2");
-        handoffMotor = hardwareMap.get(CRServo.class,"Handoff");
+        handoff = hardwareMap.get(CRServo.class,"Handoff");
 
+        //Sensor Initialization
         magSwitch = hardwareMap.get(DigitalChannel.class,"Elevator Zero");
         magSwitch.setMode(DigitalChannel.Mode.INPUT);
+
+        colorSensor = hardwareMap.get(ColorSensor.class,"colorSensor");
+        colorSensor.enableLed(false);
 
         armEncoder = new Motor(hardwareMap,"Back Right/Arm Encoder").encoder;
 
@@ -68,20 +88,30 @@ public class ScoringMechanism extends SubsystemBase {
         rightServo.setDirection(Servo.Direction.FORWARD);
         leftServo.setDirection(Servo.Direction.REVERSE);
 
-
         //Elevator Config
         elevatorMotor.setRunMode(Motor.RunMode.RawPower);
         elevatorMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         elevatorMotor.setInverted(true);
 
-        elevatorController = new PIDFController(0.02,0.0,0.00,0.0);
+
+        elevatorController = new PIDFController(0.005,0.0,0.00,0.0);
         elevatorController.setTolerance(15);
+        elevatorController.setSetPoint(0.0);
 
-
+        resetElevatorEncoder();
     }
 
     @Override
     public void periodic(){
+
+        handoff.setDirection(DcMotorSimple.Direction.FORWARD);
+        handoff.setPower(handoffPower);
+
+
+        Optional<double[]> state = getStateCorrections(elevatorLength,armAngle);
+        if(!state.isPresent()) return;
+
+        elevatorController.setSetPoint(state.get()[0]);
 
         //Elevator Movement
         double elevatorPower = elevatorController.calculate(elevatorMotor.getCurrentPosition());
@@ -92,87 +122,131 @@ public class ScoringMechanism extends SubsystemBase {
         }
 
         //Checks if reaching upper bound of elevator
-        if((elevatorMotor.getCurrentPosition() * ELEVATOR_DISTANCE_PER_PULSE)  > ELEVATOR_MAX_DISTANCE && elevatorPower > 0.0) {
+        if((elevatorMotor.getCurrentPosition() * ElevatorConstants.ELEVATOR_DISTANCE_PER_PULSE)  > ElevatorConstants.ELEVATOR_MAX_DISTANCE && elevatorPower > 0.0) {
             elevatorPower = 0.0;
         }
 
-        if(elevatorController.atSetPoint()) elevatorPower = 0.0;
-
         elevatorMotor.set(elevatorPower);
 
-
         //Arm Movement
-        OptionalDouble position = getServoPoseFromAngle(armAngle);
+        leftServo.setPosition(state.get()[1]);
+        rightServo.setPosition(state.get()[1]);
 
-        if(position.isPresent()) {
-            leftServo.setPosition(position.getAsDouble());
-            rightServo.setPosition(position.getAsDouble());
-        }
-
-        //Handoff
-        handoffMotor.setPower(handoffPower);
-        handoffMotor.setDirection(handoffDirection);
-
+        //Telemetry
         telemetry.addLine(String.format("Ticks:%d",elevatorMotor.encoder.getPosition()));
+        telemetry.addLine(String.format("ET:%4.2f",elevatorController.getSetPoint()));
+        telemetry.addLine();
+        telemetry.addLine(String.format("AP:%4.2f",leftServo.getPosition()));
+
+
 
     }
 
     //Setters
     public void setTargetState(double elevatorLength, double armAngle){
         this.armAngle = armAngle;
-        elevatorController.setSetPoint(elevatorLength);
+        this.elevatorLength = elevatorLength;
     }
-    public void setHandoffState(double power, DcMotorSimple.Direction direction){
-        handoffPower = power;
-        handoffDirection = direction;
-    }
-    public boolean setTargetEndPoint(double distance, double height){
-        Optional<double[]> stateOptional =  getStateFromTargetPoint(distance,height);
+    public void setPixelTarget(int level){
+        if(level>PositionLookup.pixelLevel.length) return;
 
-
-        if(!stateOptional.isPresent()) return false;
-
-        double[] state = stateOptional.get();
-
-        elevatorController.setSetPoint(state[0]);
+        double[] state = PositionLookup.pixelLevel[level];
+        elevatorLength = state[0];
         armAngle = state[1];
-
-        return true;
     }
+    public void setHandoff(double power){
+        handoffPower = power;
+    }
+
     public void resetElevatorEncoder(){
+
         elevatorMotor.resetEncoder();
     }
 
 
     //Getters
     public double getElevatorLength(){
-        return elevatorMotor.getCurrentPosition() * ELEVATOR_DISTANCE_PER_PULSE;
+        return elevatorMotor.getCurrentPosition() * ElevatorConstants.ELEVATOR_DISTANCE_PER_PULSE;
     }
     public  double getArmAngle(){
         //TODO:Return actual arm angle
         return 0.0;
     }
 
-//    public double getCurrentHeight(){
-//        double armHeight = sin(getArmAngle()) * ARM_LENGTH;
-//        double elevatorHeight = sin(ELEVATOR_ANGLE) * getElevatorLength();
-//        return elevatorHeight + armHeight + STARTING_HEIGHT;
-//    }
-//
-//    public double getCurrentDistance(){
-//        double armDistance = cos(getArmAngle()) * ARM_LENGTH;
-//        double elevatorDistance = cos(ELEVATOR_ANGLE) * getElevatorLength();
-//        return elevatorDistance + armDistance;
-//    }
-
     private OptionalDouble getServoPoseFromAngle(double angle){
-        if(angle > ARM_MAX_ANGLE  || angle < ARM_MIN_ANGLE){
+        if(angle > ArmConstants.ARM_MAX_ANGLE  || angle < ArmConstants.ARM_MIN_ANGLE){
             return OptionalDouble.empty();
         }
         return OptionalDouble.of(
-                angle * ARM_ANGLE_TO_POSE
+                angle * ArmConstants.ARM_ANGLE_TO_POSE
         );
     }
+
+    private Optional<double[]> getStateCorrections(double elevatorLength, double armAngle){
+        OptionalDouble tempPose = getServoPoseFromAngle(armAngle);
+
+        //Checks if there is no servo position for the given angle
+        double armPosition;
+        if(!tempPose.isPresent()) return Optional.empty();
+        else armPosition = tempPose.getAsDouble();
+
+
+        //Checks from going from the front to back
+//        if(
+//                leftServo.getPosition() < PositionLookup.travelBack[1]
+//                && armPosition > PositionLookup.travelFront[1]
+//                && elevatorMotor.getCurrentPosition() < PositionLookup.travelBack[0]
+//            ) {
+//                elevatorLength = PositionLookup.travelBack[0];
+//                armPosition = PositionLookup.travelBack[1];
+//            }
+//
+//        //Checks for going from the back to front
+//        if(
+//                leftServo.getPosition() < PositionLookup.travelFront[1]
+//                && armPosition > PositionLookup.travelBack[1]
+//                && elevatorMotor.getCurrentPosition() < PositionLookup.travelFront[0]
+//        ) {
+//            elevatorLength = PositionLookup.travelFront[0];
+//            armPosition = PositionLookup.travelFront[1];
+//        }
+
+        return Optional.of(new double[]{
+                elevatorLength,
+                armPosition
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     //Arm State from target height and distance of end-effector
@@ -192,9 +266,9 @@ public class ScoringMechanism extends SubsystemBase {
             - Get Y Coordinates using y = mx
          */
 
-        double a = 1 + Math.pow(ELEVATOR_SLOPE,2);
-        double b = -2 * (distance + (ELEVATOR_SLOPE*height));
-        double c = -(Math.pow(ARM_LENGTH,2) - Math.pow(height,2) - Math.pow(distance,2));
+        double a = 1 + Math.pow(ElevatorConstants.ELEVATOR_SLOPE,2);
+        double b = -2 * (distance + (ElevatorConstants.ELEVATOR_SLOPE*height));
+        double c = -(Math.pow(ArmConstants.ARM_LENGTH,2) - Math.pow(height,2) - Math.pow(distance,2));
         double[] xCoordinates =  solveQuadratic(a,b,c);
 
 
@@ -210,10 +284,10 @@ public class ScoringMechanism extends SubsystemBase {
     }
     private Optional<double[]> getStateFromJointCordinate(double x, double distance){
         //Get using pythagorean theorem
-        double elevatorDistance = Math.sqrt(Math.pow(x,2) + Math.pow(x * ELEVATOR_SLOPE,2));
+        double elevatorDistance = Math.sqrt(Math.pow(x,2) + Math.pow(x * ElevatorConstants.ELEVATOR_SLOPE,2));
 
         // cos(armAngle) = (x - targetX) / ARM_LENGTH
-        double armAngle = Math.acos( (x - distance) / ARM_LENGTH); //TODO: Understand this better
+        double armAngle = Math.acos( (x - distance) / ArmConstants.ARM_LENGTH); //TODO: Understand this better
 
         if(Double.isNaN(elevatorDistance) || Double.isNaN(armAngle)) return Optional.empty();
 
@@ -223,6 +297,31 @@ public class ScoringMechanism extends SubsystemBase {
         });
     }
 
+    public boolean setTargetEndPoint(double distance, double height){
+        Optional<double[]> stateOptional =  getStateFromTargetPoint(distance,height);
+
+
+        if(!stateOptional.isPresent()) return false;
+
+        double[] state = stateOptional.get();
+
+        elevatorController.setSetPoint(state[0]);
+        armAngle = state[1];
+
+        return true;
+    }
+
+//    public double getCurrentHeight(){
+//        double armHeight = sin(getArmAngle()) * ARM_LENGTH;
+//        double elevatorHeight = sin(ELEVATOR_ANGLE) * getElevatorLength();
+//        return elevatorHeight + armHeight + STARTING_HEIGHT;
+//    }
+//
+//    public double getCurrentDistance(){
+//        double armDistance = cos(getArmAngle()) * ARM_LENGTH;
+//        double elevatorDistance = cos(ELEVATOR_ANGLE) * getElevatorLength();
+//        return elevatorDistance + armDistance;
+//    }
 
     private  double[] solveQuadratic(double a, double b, double c){
         double[] solutions = {0.0,0.0};
@@ -240,9 +339,9 @@ public class ScoringMechanism extends SubsystemBase {
             if(Double.isNaN(state[0]) || Double.isNaN(state[1])) continue;
 
             //Checks that Elevator State is within min/max distance
-            if( state[0] < 0 || state[0] > ELEVATOR_MAX_DISTANCE) continue;
+            if( state[0] < 0 || state[0] > ElevatorConstants.ELEVATOR_MAX_DISTANCE) continue;
 
-            if(state[1] < ARM_MIN_ANGLE || state[1] > ARM_MAX_ANGLE) continue;
+            if(state[1] < ArmConstants.ARM_MIN_ANGLE || state[1] > ArmConstants.ARM_MAX_ANGLE) continue;
 
             //TODO: Guarantee that there is only ever one or less states
 
