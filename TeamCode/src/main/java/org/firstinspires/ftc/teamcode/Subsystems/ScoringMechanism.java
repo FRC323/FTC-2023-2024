@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionSubsystem;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -53,6 +54,13 @@ public class ScoringMechanism extends SubsystemBase {
         public static final double[][] pixelLevel = {
                 {0.0,0.05}, //Home Position
         };
+    }
+    public static enum PixelColor{
+        White,
+        Green,
+        Purple,
+        Yellow,
+        None
     }
 
 
@@ -171,6 +179,11 @@ public class ScoringMechanism extends SubsystemBase {
     public  double getArmAngle(){
         //TODO:Return actual arm angle
         return 0.0;
+    }
+
+    public PixelColor getPixelColor(){
+        //TODO: return the correct colors for the pixels
+        return PixelColor.None;
     }
 
     private OptionalDouble getServoPoseFromAngle(double angle){

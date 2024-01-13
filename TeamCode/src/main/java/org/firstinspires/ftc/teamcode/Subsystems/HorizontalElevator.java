@@ -20,8 +20,6 @@ public class HorizontalElevator extends SubsystemBase {
     private final Servo intakePoseServo;
 
     private final Telemetry telemetry;
-    private DcMotorSimple.Direction frontIntakeDirection;
-    private DcMotorSimple.Direction rearIntakeDirection;
 
     private double frontIntakePower = 0.0;
     private double rearIntakePower = 0.0;
@@ -38,6 +36,9 @@ public class HorizontalElevator extends SubsystemBase {
         frontIntake = hardwareMap.get(CRServo.class,"Front Intake");
         backIntake = hardwareMap.get(CRServo.class,"Back Intake");
 
+        frontIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+        backIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+
         rearExtenderMotor = new Motor(hardwareMap,"Back Extender");
         frontExtendorMotor = new Motor(hardwareMap,"Front Extender/Right Odom");
 
@@ -51,10 +52,7 @@ public class HorizontalElevator extends SubsystemBase {
 
     @Override
     public void periodic(){
-        frontIntake.setDirection(frontIntakeDirection);
         frontIntake.setPower(frontIntakePower);
-
-        backIntake.setDirection(rearIntakeDirection);
         backIntake.setPower(rearIntakePower);
 
         rearExtenderMotor.set(extenderPower);
@@ -66,13 +64,11 @@ public class HorizontalElevator extends SubsystemBase {
         telemetry.addLine(String.format("Pos;%4.2f",intakePoseServo.getPosition()));
     }
 
-    public void setFrontIntake(DcMotorSimple.Direction direction,double power){
-        frontIntakeDirection = direction;
+    public void setFrontIntake(double power){
         frontIntakePower = power;
     }
 
-    public void setRearIntake(DcMotorSimple.Direction direction, double power){
-        rearIntakeDirection = direction;
+    public void setRearIntake(double power){
         rearIntakePower = power;
     }
 
@@ -98,4 +94,12 @@ public class HorizontalElevator extends SubsystemBase {
         intakePoseServo.setPosition(position);
     }
 
+    public  void setExtenderLength(double length){
+        //TODO: Use camera with april tag to move the extender with a pid controller
+    }
+
+    public double getExenderLength(){
+        //TODO
+        return 0.0;
+    }
 }
