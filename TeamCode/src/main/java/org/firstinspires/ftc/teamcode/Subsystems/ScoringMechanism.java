@@ -13,10 +13,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionSubsystem;
 
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.OptionalDouble;
+
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.BackdropProcessor.PixelColor;
 
 
 public class ScoringMechanism extends SubsystemBase {
@@ -54,13 +57,7 @@ public class ScoringMechanism extends SubsystemBase {
                 {0.0,0.05}, //Home Position
         };
     }
-    public enum PixelColor{
-        White,
-        Green,
-        Purple,
-        Yellow,
-        None
-    }
+
 
 
     //Variables

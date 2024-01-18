@@ -4,6 +4,7 @@ import com.arcrobotics.ftclib.command.CommandBase;
 
 import org.firstinspires.ftc.teamcode.Subsystems.HorizontalElevator;
 import org.firstinspires.ftc.teamcode.Subsystems.ScoringMechanism;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.BackdropProcessor.PixelColor;
 
 public class HandoffPixel extends CommandBase {
 
@@ -25,7 +26,7 @@ public class HandoffPixel extends CommandBase {
         horizontalElevator.setExtenderLength(0.0);
 
         //Sets a stopwatch any time there is a pixel in the handoff
-        if(scoringMechanism.getPixelColor() != ScoringMechanism.PixelColor.None){
+        if(scoringMechanism.getPixelColor() != PixelColor.None){
             colorTime = System.currentTimeMillis();
         }else{
             colorTime = 0;

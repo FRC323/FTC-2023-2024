@@ -38,6 +38,7 @@ public class CompetitionTeleop extends CommandOpMode {
         operatorController = new OperatorController(m_scoringMechanism,gamepad2);
         informationProcessing = new InformationProcessing(m_visiionSubstem,telemetry);
 
+        //Commands
         schedule(driverController);
         schedule(operatorController);
         schedule(informationProcessing);

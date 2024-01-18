@@ -57,9 +57,9 @@ public class DriverController extends CommandBase {
 
         m_driveBase.setDriveSpeeds(
                 new ChassisSpeeds(
-                        gamepad.getRightX(),
+                        gamepad.getLeftX(),
                         gamepad.getRightY(),
-                        gamepad.getLeftX()
+                        gamepad.getRightX()
                 ),
                 !leftBumper.get()
         );
@@ -78,7 +78,7 @@ public class DriverController extends CommandBase {
             m_horizontalElevator.setIntakePosition(HorizontalElevator.IntakePose.HORIZONTAL);
         }
 
-        m_horizontalElevator.setExtenderPower(gamepad.getLeftY());
+        m_horizontalElevator.setExtenderPower(-gamepad.getLeftY());
 
         if(gamepad.getButton(GamepadKeys.Button.START)){
             m_launcher.setLaunched();
