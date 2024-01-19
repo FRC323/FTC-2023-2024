@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.Commands.InformationProcessing;
 import org.firstinspires.ftc.teamcode.Commands.Controllers.OperatorController;
 import org.firstinspires.ftc.teamcode.Subsystems.DriveBase;
 import org.firstinspires.ftc.teamcode.Subsystems.HorizontalElevator;
+import org.firstinspires.ftc.teamcode.Subsystems.Launcher;
 import org.firstinspires.ftc.teamcode.Subsystems.ScoringMechanism;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionSubsystem;
 
@@ -17,6 +18,7 @@ public class CompetitionTeleop extends CommandOpMode {
     private DriveBase m_driveBase;
     private HorizontalElevator m_horizontalElevator;
     private ScoringMechanism m_scoringMechanism;
+    private Launcher m_launcher;
     private VisionSubsystem m_visiionSubstem;
 
     //Commands
@@ -29,9 +31,10 @@ public class CompetitionTeleop extends CommandOpMode {
         m_driveBase = new DriveBase(hardwareMap,telemetry);
         m_horizontalElevator = new HorizontalElevator(hardwareMap,telemetry);
         m_scoringMechanism = new ScoringMechanism(hardwareMap,telemetry);
+        m_launcher = new Launcher(hardwareMap);
         m_visiionSubstem = new VisionSubsystem(hardwareMap,telemetry);
 
-        driverController = new DriverController(m_driveBase,m_horizontalElevator,gamepad1);
+        driverController = new DriverController(m_driveBase,m_horizontalElevator,m_launcher,gamepad1);
         operatorController = new OperatorController(m_scoringMechanism,gamepad2);
         informationProcessing = new InformationProcessing(m_visiionSubstem,telemetry);
 
