@@ -13,7 +13,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionSubsystem;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -55,7 +54,7 @@ public class ScoringMechanism extends SubsystemBase {
                 {0.0,0.05}, //Home Position
         };
     }
-    public static enum PixelColor{
+    public enum PixelColor{
         White,
         Green,
         Purple,
@@ -85,7 +84,7 @@ public class ScoringMechanism extends SubsystemBase {
         magSwitch = hardwareMap.get(DigitalChannel.class,"Elevator Zero");
         magSwitch.setMode(DigitalChannel.Mode.INPUT);
 
-        colorSensor = hardwareMap.get(ColorSensor.class,"colorSensor");
+        colorSensor = hardwareMap.get(ColorSensor.class,"Color Sensor");
         colorSensor.enableLed(false);
 
         armEncoder = new Motor(hardwareMap,"Back Right/Arm Encoder").encoder;
