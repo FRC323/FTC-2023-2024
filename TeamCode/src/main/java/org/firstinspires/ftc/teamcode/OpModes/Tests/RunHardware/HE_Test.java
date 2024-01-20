@@ -1,12 +1,14 @@
-package org.firstinspires.ftc.teamcode.OpModes.Tests;
+package org.firstinspires.ftc.teamcode.OpModes.Tests.RunHardware;
 
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "HE_TEST",group = "tests")
+@Disabled
 public class HE_Test extends LinearOpMode {
 
 

@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name="Arm",group = "tests")
+@Disabled
 public class ArmPoseTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
