@@ -22,6 +22,9 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,15 +34,17 @@ import java.util.OptionalDouble;
 public class VisionSubsystem extends SubsystemBase {
 
     private final WebcamName frontCamera;
-    private final WebcamName backCamera;
+//    private final WebcamName backCamera;
+    private final OpenCvCamera cameraOpenCV;
 
-    private final VisionPortal visionPortal;
+//    private final VisionPortal visionPortal;
 
     private final AprilTagProcessor aprilTagProcessor;
-    private final TfodProcessor extenderProcessor;
+    private final ExtenderPipeline extenderPipeline;
     private TfodProcessor teamPropProcessor;
     private BackdropProcessor backdropProcessor = new BackdropProcessor();
 
+    private boolean isFrontCameraOpen = false;
 
     private final Telemetry telemetry;
 
@@ -47,7 +52,7 @@ public class VisionSubsystem extends SubsystemBase {
 
         //Initalize Cameras
         frontCamera = hardwareMap.get(WebcamName.class,"Front Camera");
-        backCamera = hardwareMap.get(WebcamName.class,"Back Camera");
+//        backCamera = hardwareMap.get(WebcamName.class,"Back Camera");
 
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
@@ -55,22 +60,44 @@ public class VisionSubsystem extends SubsystemBase {
                 .setDrawCubeProjection(true)
                 .build();
 
-        extenderProcessor = new TfodProcessor.Builder()
-                //TODO
-                .build();
+        extenderPipeline = new ExtenderPipeline();
 
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(frontCamera)
-                .enableLiveView(true)
-                .addProcessor(aprilTagProcessor)
-                .addProcessor(backdropProcessor)
-                .addProcessor(extenderProcessor)
-                .addProcessor(teamPropProcessor)
-                .build();
+//        visionPortal = new VisionPortal.Builder()
+//                .setCamera(frontCamera)
+//                .enableLiveView(true)
+////                .setCamera(backCamera)
+////                .addProcessor(aprilTagProcessor)
+////                .addProcessor(backdropProcessor)
+////                .addProcessor(teamPropProcessor)
+//                .build();
 
-        visionPortal.resumeStreaming();
+//        visionPortal.resumeStreaming();
 
+        //Custom OpenCV pipeline
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        cameraOpenCV = OpenCvCameraFactory.getInstance().createWebcam(frontCamera, cameraMonitorViewId);
 
+        cameraOpenCV.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+                // Usually this is where you'll want to start streaming from the camera (see section 4)
+                telemetry.addLine("Camera Working");
+                isFrontCameraOpen = true;
+                setFrontCameraEnabled(true);
+            }
+            @Override
+            public void onError(int errorCode)
+            {
+                /*
+                 * This will be called if the camera could not be opened
+                 */
+                telemetry.addLine("OpenCV Camera Error");
+            }
+        });
+
+        cameraOpenCV.setPipeline(extenderPipeline);
 
 
         this.telemetry = telemetry;
@@ -79,8 +106,17 @@ public class VisionSubsystem extends SubsystemBase {
 
     @Override
     public void periodic(){
-        visionPortal.resumeStreaming();
+//        visionPortal.resumeStreaming();
+        telemetry.addLine(String.format("Dist: %4.2f",extenderPipeline.getDistanceFromFrame()));
+        telemetry.addLine(String.format("Pix: %d",extenderPipeline.getRawPixelsFromFrame()));
+    }
 
+    public void setFrontCameraEnabled(boolean enabled){
+        if(enabled && isFrontCameraOpen){
+            cameraOpenCV.startStreaming(800, 600, OpenCvCameraRotation.UPRIGHT);
+        }else{
+            cameraOpenCV.stopStreaming();
+        }
     }
 
     //Get Data from processors
@@ -153,15 +189,11 @@ public class VisionSubsystem extends SubsystemBase {
 
     }
 
-    public OptionalDouble getExtenderDistance(){
-        List<Recognition> recognitionList  = extenderProcessor.getRecognitions();
+    public double getExtenderDistance(){
+        extenderPipeline.getDistanceFromFrame();
 
-        if(recognitionList.isEmpty()) return OptionalDouble.empty();
-
-        Recognition recognition = recognitionList.get(0);
-
-        return OptionalDouble.of(recognition.getBottom() * 20); //TODO: GET ACTUAL PIXELS PER INCH
-
+        //TODO:Math to calculate the distance
+        return 0.0;
     }
 
     public Optional<TeamPropProcessor.PropLocation> getPropLocation(){
@@ -183,11 +215,6 @@ public class VisionSubsystem extends SubsystemBase {
         }
 
         return Optional.of(TeamPropProcessor.PropLocation.Center);
-    }
-
-    public void switchCameraToFront(boolean value){
-        if(value) visionPortal.setActiveCamera(frontCamera);
-        else  visionPortal.setActiveCamera(backCamera);
     }
 
 
