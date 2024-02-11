@@ -9,11 +9,13 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.Subsystems.DriveBase;
 import org.firstinspires.ftc.teamcode.Subsystems.Launcher;
+import org.firstinspires.ftc.teamcode.Subsystems.PixelClaw;
 
 public class DriverController extends CommandBase {
 
     DriveBase m_driveBase;
     Launcher m_launcher;
+    PixelClaw m_pixelClaw;
 
     GamepadEx gamepad;
 
@@ -21,9 +23,10 @@ public class DriverController extends CommandBase {
     GamepadButton leftBumper;
 
 
-    public DriverController(DriveBase m_driveBase,Launcher launcher, Gamepad gamepad){
+    public DriverController(DriveBase m_driveBase,Launcher launcher,PixelClaw pixelClaw, Gamepad gamepad){
         this.m_driveBase = m_driveBase;
         this.m_launcher = launcher;
+        this.m_pixelClaw = pixelClaw;
 
         this.gamepad = new GamepadEx(gamepad);
         rightBumper = new GamepadButton(this.gamepad, GamepadKeys.Button.RIGHT_BUMPER);
@@ -50,12 +53,20 @@ public class DriverController extends CommandBase {
                 !leftBumper.get()
         );
 
+        if(gamepad.getButton(GamepadKeys.Button.X)){
+            m_pixelClaw.setOpen();
+        }
 
-        if(gamepad.getButton(GamepadKeys.Button.START)){
+        if(gamepad.getButton(GamepadKeys.Button.Y)){
+            m_pixelClaw.setClosed();
+            //for Redundancy
+        }
+
+        if(gamepad.getButton(GamepadKeys.Button.A)){
             m_launcher.setLaunched();
         }
 
-        if(gamepad.getButton(GamepadKeys.Button.BACK)){
+        if(gamepad.getButton(GamepadKeys.Button.B)){
             m_launcher.setBack();
         }
 

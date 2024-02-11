@@ -7,12 +7,14 @@ import org.firstinspires.ftc.teamcode.Commands.Controllers.DriverController;
 import org.firstinspires.ftc.teamcode.Commands.Controllers.OperatorController;
 import org.firstinspires.ftc.teamcode.Subsystems.DriveBase;
 import org.firstinspires.ftc.teamcode.Subsystems.Launcher;
+import org.firstinspires.ftc.teamcode.Subsystems.PixelClaw;
 
 @TeleOp(name = "Main", group = "competition")
 public class CompetitionTeleop extends CommandOpMode {
     //Subsystems
     private DriveBase m_driveBase;
     private Launcher m_launcher;
+    private PixelClaw m_pixelClaw;
 
     //Commands
     private DriverController driverController;
@@ -22,8 +24,9 @@ public class CompetitionTeleop extends CommandOpMode {
     public void initialize() {
         m_driveBase = new DriveBase(hardwareMap,telemetry);
         m_launcher = new Launcher(hardwareMap);
+        m_pixelClaw = new PixelClaw(hardwareMap);
 
-        driverController = new DriverController(m_driveBase,m_launcher,gamepad1);
+        driverController = new DriverController(m_driveBase,m_launcher,m_pixelClaw,gamepad1);
         operatorController = new OperatorController(gamepad2);
 
         schedule(driverController);
