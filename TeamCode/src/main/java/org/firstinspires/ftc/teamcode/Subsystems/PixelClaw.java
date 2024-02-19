@@ -9,11 +9,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.concurrent.TimeUnit;
 
+import kotlin.Pair;
+
 public class PixelClaw extends SubsystemBase {
     private final Servo leftServo;
     private  final Servo rightServo;
 
-    private final ColorSensor colorSensor;
+    private final ColorSensor leftColorSensor;
+    private final  ColorSensor rightColorSensor;
 
 
     private final double CLOSED_POSITION_LEFT = 0.0;
@@ -22,11 +25,10 @@ public class PixelClaw extends SubsystemBase {
     private final double OPEN_POSITION_RIGHT = 0.0;
 
 
-    private final int PURPLE_PIXEL_COLOR = 0xFF00FF;
-    private final int GREEN_PIXEL_COLOR = 0x00FF00;
-    private final int YELLOW_PIXEL_COLOR = 0xFFFF00;
-    private final int WHITE_PIXEL_COLOR = 0xFFFFFF;
-
+    private final Pair<Integer,Integer> PURPLE_PIXEL_COLOR = new Pair(0,0);
+    private final Pair<Integer,Integer> GREEN_PIXEL_COLOR = new Pair(0,0);
+    private final Pair<Integer,Integer> YELLOW_PIXEL_COLOR = new Pair(0,0);
+    private final Pair<Integer,Integer> WHITE_PIXEL_COLOR = new Pair(0,0);
     private final long DROP_TIME = 1;
 
     Timing.Timer dropBuffer = new Timing.Timer(1, TimeUnit.SECONDS);
@@ -36,7 +38,8 @@ public class PixelClaw extends SubsystemBase {
         Purple,
         Yellow,
         Green,
-        White
+        White,
+        None
     }
 
     private final double NO_PIXEL_RED = 0x00;
@@ -44,36 +47,53 @@ public class PixelClaw extends SubsystemBase {
     public PixelClaw(HardwareMap hardwareMap){
         leftServo = hardwareMap.get(Servo.class, "Left Claw");
         rightServo = hardwareMap.get(Servo.class, "Right Claw");
-        colorSensor = hardwareMap.get(ColorSensor.class, "Color Sensor");
+        leftColorSensor = hardwareMap.get(ColorSensor.class, "Left Color");
+        rightColorSensor = hardwareMap.get(ColorSensor.class, "Right Color");
     }
 
     @Override
     public void periodic(){
-        if(hasPixel() && dropBuffer.done()){
-            setClosed();
+        if(leftHasPixel() && dropBuffer.done()){
+            setLeftClosed();
         }
     }
 
-    public void setClosed(){
+    public void setLeftClosed(){
         leftServo.setPosition(CLOSED_POSITION_LEFT);
         rightServo.setPosition(CLOSED_POSITION_RIGHT);
         previouslyClosed = true;
     }
 
-    public void setOpen(){
+    public void setLeftOpen(){
         leftServo.setPosition(OPEN_POSITION_LEFT);
         rightServo.setPosition(OPEN_POSITION_RIGHT);
         resetTimer();
     }
 
-    public boolean hasPixel(){
-        //TODO: Get Actual value
-        return colorSensor.red() > NO_PIXEL_RED;
+    public void setRightClosed(){
+        rightServo.setPosition(CLOSED_POSITION_RIGHT);
+        previouslyClosed = true;
     }
 
-    public PixelColor getPixelColor(){
-        //TODO
-        return PixelColor.White;
+    public void setRightOpen() {
+        rightServo.setPosition(OPEN_POSITION_RIGHT);
+        resetTimer();
+    }
+
+    public boolean leftHasPixel(){
+        return leftPixelColor() != PixelColor.None;
+    }
+
+    public  boolean rightHasPixel(){
+        return rightPixelColor() != PixelColor.None;
+    }
+
+    public PixelColor leftPixelColor(){
+        return PixelColor.White;//leftColorSensor.argb();
+    }
+
+    public PixelColor rightPixelColor(){
+        return PixelColor.White;//rightColorSensor.argb();
     }
 
     private void resetTimer(){

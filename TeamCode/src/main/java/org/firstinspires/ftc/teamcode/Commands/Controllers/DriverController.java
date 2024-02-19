@@ -54,19 +54,27 @@ public class DriverController extends CommandBase {
         );
 
         if(gamepad.getButton(GamepadKeys.Button.X)){
-            m_pixelClaw.setOpen();
+            m_pixelClaw.setLeftClosed();
         }
 
         if(gamepad.getButton(GamepadKeys.Button.Y)){
-            m_pixelClaw.setClosed();
+            m_pixelClaw.setLeftOpen();
             //for Redundancy
         }
 
         if(gamepad.getButton(GamepadKeys.Button.A)){
-            m_launcher.setLaunched();
+            m_pixelClaw.setRightClosed();
         }
 
         if(gamepad.getButton(GamepadKeys.Button.B)){
+            m_pixelClaw.setRightOpen();
+        }
+
+        if(gamepad.getButton(GamepadKeys.Button.START)){
+            m_launcher.setLaunched();
+        }
+
+        if(gamepad.getButton(GamepadKeys.Button.BACK)){
             m_launcher.setBack();
         }
 
