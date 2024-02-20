@@ -15,8 +15,8 @@ public class PixelClaw extends SubsystemBase {
     private final Servo leftServo;
     private  final Servo rightServo;
 
-    private final ColorSensor leftColorSensor;
-    private final  ColorSensor rightColorSensor;
+//    private final ColorSensor leftColorSensor;
+//    private final  ColorSensor rightColorSensor;
 
 
     private final double CLOSED_POSITION_LEFT = 0.0;
@@ -47,8 +47,8 @@ public class PixelClaw extends SubsystemBase {
     public PixelClaw(HardwareMap hardwareMap){
         leftServo = hardwareMap.get(Servo.class, "Left Claw");
         rightServo = hardwareMap.get(Servo.class, "Right Claw");
-        leftColorSensor = hardwareMap.get(ColorSensor.class, "Left Color");
-        rightColorSensor = hardwareMap.get(ColorSensor.class, "Right Color");
+//        leftColorSensor = hardwareMap.get(ColorSensor.class, "Left Color");
+//        rightColorSensor = hardwareMap.get(ColorSensor.class, "Right Color");
     }
 
     @Override

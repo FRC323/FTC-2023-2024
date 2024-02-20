@@ -18,7 +18,7 @@ public class CompetitionTeleop extends CommandOpMode {
 
     //Commands
     private DriverController driverController;
-    private OperatorController operatorController;
+//    private OperatorController operatorController;
 
     @Override
     public void initialize() {
@@ -27,9 +27,9 @@ public class CompetitionTeleop extends CommandOpMode {
         m_pixelClaw = new PixelClaw(hardwareMap);
 
         driverController = new DriverController(m_driveBase,m_launcher,m_pixelClaw,gamepad1);
-        operatorController = new OperatorController(gamepad2);
+//        operatorController = new OperatorController(gamepad2);
 
         schedule(driverController);
-        schedule(operatorController);
+//        schedule(operatorController);
     }
 }

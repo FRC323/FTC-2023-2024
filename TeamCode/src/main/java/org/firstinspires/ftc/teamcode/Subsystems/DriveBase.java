@@ -55,19 +55,17 @@ public class DriveBase extends SubsystemBase{
     public DriveBase(HardwareMap hardware_map, Telemetry telemetry){
 
         //Motors
-        frontLeftMotor = new Motor(hardware_map,"Front Left/Left Odom");
-        frontRightMotor = new Motor(hardware_map,"Front Right/Center Odom");
+        frontLeftMotor = new Motor(hardware_map,"Front Left");
+        frontRightMotor = new Motor(hardware_map,"Front Right");
         backLeftMotor = new Motor(hardware_map,"Back Left");
-        backRightMotor = new Motor(hardware_map,"Back Right/Arm Encoder");
-
-
+        backRightMotor = new Motor(hardware_map,"Back Right/Right Odom");
 
         this.telemetry = telemetry;
 
         //Encoders
-        leftEncoder = frontLeftMotor.encoder;
-        rightEncoder = new Motor(hardware_map, "Front Extender/Right Odom").encoder;
-        centerEncoder = frontRightMotor.encoder;
+        leftEncoder = new Motor(hardware_map, "Left Odom").encoder;
+        rightEncoder = backRightMotor.encoder;
+        centerEncoder = new Motor(hardware_map, "Center Odom").encoder;
 
         leftEncoder.setDistancePerPulse(ODOMETRY_DISTANCE_PER_TICK);
         leftEncoder.setDirection(Motor.Direction.REVERSE);

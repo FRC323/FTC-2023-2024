@@ -53,30 +53,30 @@ public class DriverController extends CommandBase {
                 !leftBumper.get()
         );
 
-        if(gamepad.getButton(GamepadKeys.Button.X)){
-            m_pixelClaw.setLeftClosed();
-        }
-
-        if(gamepad.getButton(GamepadKeys.Button.Y)){
-            m_pixelClaw.setLeftOpen();
-            //for Redundancy
-        }
-
-        if(gamepad.getButton(GamepadKeys.Button.A)){
-            m_pixelClaw.setRightClosed();
-        }
-
-        if(gamepad.getButton(GamepadKeys.Button.B)){
-            m_pixelClaw.setRightOpen();
-        }
-
-        if(gamepad.getButton(GamepadKeys.Button.START)){
-            m_launcher.setLaunched();
-        }
-
-        if(gamepad.getButton(GamepadKeys.Button.BACK)){
-            m_launcher.setBack();
-        }
+//        if(gamepad.getButton(GamepadKeys.Button.X)){
+//            m_pixelClaw.setLeftClosed();
+//        }
+//
+//        if(gamepad.getButton(GamepadKeys.Button.Y)){
+//            m_pixelClaw.setLeftOpen();
+//            //for Redundancy
+//        }
+//
+//        if(gamepad.getButton(GamepadKeys.Button.A)){
+//            m_pixelClaw.setRightClosed();
+//        }
+//
+//        if(gamepad.getButton(GamepadKeys.Button.B)){
+//            m_pixelClaw.setRightOpen();
+//        }
+//
+//        if(gamepad.getButton(GamepadKeys.Button.START)){
+//            m_launcher.setLaunched();
+//        }
+//
+//        if(gamepad.getButton(GamepadKeys.Button.BACK)){
+//            m_launcher.setBack();
+//        }
 
     }
 
