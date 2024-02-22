@@ -90,15 +90,21 @@ public class DriveBase extends SubsystemBase{
                 CENTER_WHEEL_OFFSET
         );
 
+        frontLeftMotor.setInverted(true);
+        frontRightMotor.setInverted(false);
+        backLeftMotor.setInverted(false);
+        backRightMotor.setInverted(true);
+
+        frontLeftMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        frontRightMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        backLeftMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        backRightMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+
     }
 
     @Override
     public void periodic(){
 
-        frontLeftMotor.setInverted(true);
-        frontRightMotor.setInverted(false);
-        backLeftMotor.setInverted(false);
-        backRightMotor.setInverted(true);
 
 
         if(fieldCentric){

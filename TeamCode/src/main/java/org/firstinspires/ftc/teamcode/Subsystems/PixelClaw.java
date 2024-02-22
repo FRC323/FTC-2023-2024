@@ -19,10 +19,10 @@ public class PixelClaw extends SubsystemBase {
 //    private final  ColorSensor rightColorSensor;
 
 
-    private final double CLOSED_POSITION_LEFT = 0.0;
-    private final double CLOSED_POSITION_RIGHT = 1.0;
-    private final double OPEN_POSITION_LEFT = 1.0;
-    private final double OPEN_POSITION_RIGHT = 0.0;
+    private final double CLOSED_POSITION_LEFT = 0.26;
+    private final double CLOSED_POSITION_RIGHT = 0.59;
+    private final double OPEN_POSITION_LEFT = 0.35;
+    private final double OPEN_POSITION_RIGHT = 0.5;
 
 
     private final Pair<Integer,Integer> PURPLE_PIXEL_COLOR = new Pair(0,0);
@@ -53,20 +53,18 @@ public class PixelClaw extends SubsystemBase {
 
     @Override
     public void periodic(){
-        if(leftHasPixel() && dropBuffer.done()){
-            setLeftClosed();
-        }
+//        if(leftHasPixel() && dropBuffer.done()){
+//            setLeftClosed();
+//        }
     }
 
     public void setLeftClosed(){
         leftServo.setPosition(CLOSED_POSITION_LEFT);
-        rightServo.setPosition(CLOSED_POSITION_RIGHT);
         previouslyClosed = true;
     }
 
     public void setLeftOpen(){
         leftServo.setPosition(OPEN_POSITION_LEFT);
-        rightServo.setPosition(OPEN_POSITION_RIGHT);
         resetTimer();
     }
 
